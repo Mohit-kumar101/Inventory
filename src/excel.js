@@ -2,7 +2,6 @@ const COLUMNS = [
   ['transactionId', 'Transaction ID'],
   ['date', 'Date'],
   ['time', 'Time'],
-  ['timestamp', 'Timestamp'],
   ['movement', 'Movement'],
   ['fgNumber', 'FG Number'],
   ['description', 'Description'],

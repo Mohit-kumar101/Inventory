@@ -1,22 +1,22 @@
 :root {
   color-scheme: light;
-  --bg: #efece4;
-  --surface: #fffdf8;
-  --ink: #1a1814;
-  --muted: #5e584e;
-  --line: #e3dcd0;
-  --out: #9a3412;
-  --out-bg: #ffedd5;
-  --return: #14532d;
-  --return-bg: #dcfce7;
-  --action: #1f3d36;
-  --action-ink: #f6f3ec;
-  --danger: #9f1239;
-  --focus: #1f3d36;
-  --shadow: 0 1px 2px rgba(26, 24, 20, 0.06);
-  --radius: 18px;
-  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
-  line-height: 1.4;
+  --bg: #f3f5f8;
+  --surface: #ffffff;
+  --ink: #0f172a;
+  --muted: #64748b;
+  --line: #e2e8f0;
+  --out: #c2410c;
+  --out-bg: #fff7ed;
+  --return: #047857;
+  --return-bg: #ecfdf5;
+  --action: #2563eb;
+  --action-ink: #ffffff;
+  --danger: #e11d48;
+  --focus: #2563eb;
+  --shadow: 0 10px 30px rgba(15, 23, 42, 0.06);
+  --radius: 16px;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  line-height: 1.45;
   background: var(--bg);
   color: var(--ink);
 }
@@ -26,7 +26,9 @@
 body {
   margin: 0;
   min-height: 100dvh;
-  background: var(--bg);
+  background:
+    radial-gradient(900px 420px at 50% -80px, rgba(37, 99, 235, 0.14), transparent 60%),
+    var(--bg);
 }
 
 button,
@@ -60,21 +62,27 @@ code {
 .shell.wide { width: min(100%, 44rem); }
 
 .topbar {
+  position: sticky;
+  top: calc(8px + env(safe-area-inset-top));
+  z-index: 5;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin-bottom: 16px;
-  padding: 14px 16px;
+  margin-bottom: 20px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
   border-radius: 18px;
-  background: #1f3d36;
-  color: #f6f3ec;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: var(--shadow);
+  color: var(--ink);
+  backdrop-filter: blur(16px);
 }
 
 .eyebrow {
   margin: 0;
-  color: #d5e4de;
-  font-size: 0.78rem;
+  color: var(--action);
+  font-size: 0.72rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -91,11 +99,11 @@ code {
   align-items: center;
   justify-content: center;
   min-height: 44px;
-  padding: 0 14px;
-  border: 1px solid rgba(246, 243, 236, 0.35);
+  padding: 0 16px;
+  border: 0;
   border-radius: 999px;
-  background: transparent;
-  color: #f6f3ec;
+  background: var(--action);
+  color: white;
   font-weight: 700;
   text-decoration: none;
 }
@@ -132,14 +140,14 @@ h1 {
   min-height: 96px;
   padding: 18px 18px 18px 20px;
   border: 1px solid var(--line);
-  border-radius: var(--radius);
+  border-radius: 20px;
   background: var(--surface);
   box-shadow: var(--shadow);
   text-align: left;
 }
 
-.choice.out { border-left: 8px solid var(--out); }
-.choice.back { border-left: 8px solid var(--return); }
+.choice.out { box-shadow: inset 4px 0 0 var(--out), var(--shadow); }
+.choice.back { box-shadow: inset 4px 0 0 var(--return), var(--shadow); }
 .choice strong { font-size: 1.3rem; }
 .choice span { margin-top: 4px; color: var(--muted); }
 
@@ -171,16 +179,23 @@ textarea {
   width: 100%;
   min-height: 52px;
   padding: 12px 14px;
-  border: 1px solid #cfc6b8;
+  border: 1px solid var(--line);
   border-radius: 12px;
-  background: white;
+  background: #f8fafc;
   font-size: 16px;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  background: white;
+  border-color: #93c5fd;
 }
 
 textarea { min-height: 84px; resize: vertical; }
 
 input:disabled {
-  background: #f3efe7;
+  background: #f1f5f9;
   color: var(--muted);
 }
 
@@ -215,11 +230,12 @@ input:disabled {
   border: 0;
   background: var(--action);
   color: var(--action-ink);
+  box-shadow: 0 8px 18px rgba(37, 99, 235, 0.24);
 }
 
 .secondary {
-  border: 1px solid #cfc6b8;
-  background: transparent;
+  border: 1px solid var(--line);
+  background: white;
   color: var(--ink);
 }
 
@@ -230,7 +246,7 @@ input:disabled {
   gap: 10px;
   margin: 8px -16px 0;
   padding: 12px 16px calc(8px + env(safe-area-inset-bottom));
-  background: linear-gradient(to top, var(--bg) 70%, rgba(239, 236, 228, 0));
+  background: linear-gradient(to top, var(--bg) 70%, rgba(243, 245, 248, 0));
 }
 
 .movement-row,
@@ -373,10 +389,11 @@ input:disabled {
 .missing { margin: 0 0 12px; padding-left: 1.2rem; }
 
 .success {
-  background: #f3fbf5;
-  border: 1px solid #86efac;
+  background: white;
+  border: 1px solid #bbf7d0;
   border-radius: 20px;
   padding: 18px 16px 8px;
+  box-shadow: var(--shadow);
 }
 
 .success .dock {
@@ -456,8 +473,8 @@ input:disabled {
   margin: 0 0 14px;
   padding: 12px 14px;
   border-radius: 14px;
-  background: #ecfdf3;
-  color: #14532d;
+  background: #ecfdf5;
+  color: #065f46;
 }
 
 .danger-panel {

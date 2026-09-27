@@ -12,7 +12,7 @@ export function StationLink() {
     QRCode.toDataURL(url, {
       margin: 1,
       width: 240,
-      color: { dark: '#1f3d36', light: '#fffdf8' },
+      color: { dark: '#0f172a', light: '#ffffff' },
     })
       .then((data) => {
         if (!cancelled) setImage(data);
