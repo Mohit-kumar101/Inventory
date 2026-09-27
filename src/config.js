@@ -8,7 +8,7 @@ export const config = {
   useMock: import.meta.env.VITE_USE_MOCK === 'true',
   scriptUrl: normalizeUrl(import.meta.env.VITE_APPS_SCRIPT_URL),
   apiToken: String(import.meta.env.VITE_API_TOKEN || '').trim(),
-  publicUrl: String(import.meta.env.VITE_PUBLIC_URL || 'http://localhost:5173/').trim(),
+  publicUrl: String(import.meta.env.VITE_PUBLIC_URL || 'https://mohit-kumar101.github.io/Inventory/').trim(),
 };
 
 export function missingConfig() {
