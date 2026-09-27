@@ -37,7 +37,7 @@ export function validateDetails(values) {
   if (!/^[1-9]\d{0,5}$/.test(quantity)) {
     errors.quantity = 'Enter a whole number from 1 to 999999.';
   }
-  if (!technician) errors.technician = 'Enter the technician’s name.';
+  if (!technician) errors.technician = 'Enter the employee’s name.';
 
   return {
     errors,

@@ -8,7 +8,7 @@ const COLUMNS = [
   ['partNumber', 'Part Number'],
   ['company', 'Company'],
   ['quantity', 'Quantity'],
-  ['technician', 'Technician'],
+  ['technician', 'Employee'],
   ['workOrder', 'Work Order'],
 ];
 

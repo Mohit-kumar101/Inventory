@@ -300,7 +300,7 @@ function DetailsStep({ form, errors, headingRef, onChange, onSubmit }) {
         />
         <TextField
           id="technician"
-          label="Technician"
+          label="Employee"
           value={form.technician}
           maxLength={80}
           autoCapitalize="words"
@@ -348,7 +348,7 @@ function ReviewStep({ form, headingRef, submitting, submitError, onEdit, onConfi
     ['Part number', form.partNumber],
     ['Company', form.company],
     ['Quantity', form.quantity],
-    ['Technician', form.technician],
+    ['Employee', form.technician],
     ['Work order', form.workOrder || 'None'],
   ];
 

@@ -168,7 +168,7 @@ function HistoryBody() {
         </label>
         <TextField
           id="filterTechnician"
-          label="Technician"
+          label="Employee"
           value={draft.technician}
           autoCapitalize="words"
           onChange={(event) => setDraft((current) => ({ ...current, technician: event.target.value }))}
@@ -254,7 +254,7 @@ function HistoryBody() {
                 <dd>{row.company}</dd>
               </div>
               <div>
-                <dt>Technician</dt>
+                <dt>Employee</dt>
                 <dd>{row.technician}</dd>
               </div>
               <div>
