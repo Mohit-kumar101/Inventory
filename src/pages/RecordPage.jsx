@@ -393,7 +393,7 @@ function SuccessStep({ form, result, headingRef, onAnother }) {
       </h1>
       <p className="lede">Open History when you want to download these entries as Excel.</p>
       <p className="txn">
-        <span>Recorded</span>
+        <span>Transaction {result?.transactionId}</span>
         <strong>{result?.timestamp}</strong>
       </p>
       <ul className="recap">

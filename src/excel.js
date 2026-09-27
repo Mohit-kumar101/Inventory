@@ -1,5 +1,5 @@
 const COLUMNS = [
-  ['transactionId', 'Transaction ID'],
+  ['transactionId', 'Transaction'],
   ['date', 'Date'],
   ['time', 'Time'],
   ['movement', 'Movement'],
@@ -25,9 +25,15 @@ export function excelFilename(filters) {
   return 'inventory-latest.csv';
 }
 
+function transactionNumber(row) {
+  const value = Number.parseInt(String(row?.transactionId ?? ''), 10);
+  return Number.isFinite(value) ? value : 0;
+}
+
 export function downloadExcel(rows, filename) {
+  const ordered = rows.slice().sort((a, b) => transactionNumber(a) - transactionNumber(b));
   const header = COLUMNS.map(([, label]) => label).join(',');
-  const lines = rows.map((row) => COLUMNS.map(([key]) => escapeCsv(row[key])).join(','));
+  const lines = ordered.map((row) => COLUMNS.map(([key]) => escapeCsv(row[key])).join(','));
   const csv = `\uFEFF${[header, ...lines].join('\r\n')}`;
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
   const url = URL.createObjectURL(blob);

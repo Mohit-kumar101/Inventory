@@ -227,9 +227,7 @@ function HistoryBody() {
           <article className="card" key={row.localId}>
             <div className="card-top">
               <span className={row.movement === 'OUT' ? 'pill out' : 'pill back'}>{row.movement}</span>
-              <span className="txn-id">
-                {row.date} {row.time}
-              </span>
+              <span className="txn-id">Transaction {row.transactionId}</span>
             </div>
             <p className="card-title">{row.description}</p>
             <dl className="facts">

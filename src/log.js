@@ -1,9 +1,29 @@
 const LOG_KEY = 'inventory.log';
 
+function transactionNumber(row) {
+  const value = Number.parseInt(String(row?.transactionId ?? ''), 10);
+  return Number.isFinite(value) && value > 0 ? value : 0;
+}
+
+function assignMissingNumbers(rows) {
+  let highest = rows.reduce((max, row) => Math.max(max, transactionNumber(row)), 0);
+  let changed = false;
+  const numbered = rows.map((row) => {
+    if (transactionNumber(row)) return row;
+    highest += 1;
+    changed = true;
+    return { ...row, transactionId: String(highest) };
+  });
+  return { numbered, changed };
+}
+
 function readAll() {
   try {
     const parsed = JSON.parse(localStorage.getItem(LOG_KEY) || '[]');
-    return Array.isArray(parsed) ? parsed : [];
+    const rows = Array.isArray(parsed) ? parsed : [];
+    const { numbered, changed } = assignMissingNumbers(rows);
+    if (changed) writeAll(numbered);
+    return numbered;
   } catch {
     return [];
   }
@@ -42,6 +62,8 @@ export function saveEntry(fields) {
     transactionId: '',
   };
   const rows = readAll();
+  const highest = rows.reduce((max, row) => Math.max(max, transactionNumber(row)), 0);
+  entry.transactionId = String(highest + 1);
   rows.push(entry);
   writeAll(rows.slice(-2000));
   return entry;
