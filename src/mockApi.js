@@ -23,17 +23,6 @@ function wait() {
   });
 }
 
-function newId(now) {
-  const pad = (n) => String(n).padStart(2, '0');
-  const stamp = [
-    now.getFullYear(),
-    pad(now.getMonth() + 1),
-    pad(now.getDate()),
-  ].join('') + `-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
-  const rand = Math.random().toString(16).slice(2, 10);
-  return `TXN-${stamp}-${rand}`;
-}
-
 function append(body) {
   const checked = validateDetails({ ...body, noFg: !String(body.fgNumber || '').trim() });
   if (body.movement !== 'OUT' && body.movement !== 'RETURN') {
@@ -55,8 +44,10 @@ function append(body) {
   const pad = (n) => String(n).padStart(2, '0');
   const date = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}`;
   const time = `${pad(now.getHours())}:${pad(now.getMinutes())}:${pad(now.getSeconds())}`;
+  const rows = readJson(TX_KEY, []);
+  const highest = rows.reduce((max, item) => Math.max(max, Number.parseInt(item.transactionId, 10) || 0), 0);
   const row = {
-    transactionId: newId(now),
+    transactionId: String(highest + 1),
     date,
     time,
     timestamp: `${date} ${time}`,
@@ -70,7 +61,6 @@ function append(body) {
     workOrder: checked.value.workOrder,
   };
 
-  const rows = readJson(TX_KEY, []);
   rows.push(row);
   writeJson(TX_KEY, rows.slice(-500));
   receipts[body.idempotencyKey] = {

@@ -35,23 +35,19 @@ export async function postAction(body) {
   return data;
 }
 
-export function importEntries(entries) {
+export function appendTransaction(fields, idempotencyKey) {
   return postAction({
-    action: 'import',
+    action: 'append',
     token: config.apiToken,
-    entries: entries.map((entry) => ({
-      localId: entry.localId,
-      date: entry.date,
-      time: entry.time,
-      movement: entry.movement,
-      fgNumber: entry.fgNumber,
-      description: entry.description,
-      partNumber: entry.partNumber,
-      company: entry.company,
-      quantity: entry.quantity,
-      technician: entry.technician,
-      workOrder: entry.workOrder,
-    })),
+    idempotencyKey,
+    movement: fields.movement,
+    fgNumber: fields.fgNumber,
+    description: fields.description,
+    partNumber: fields.partNumber,
+    company: fields.company,
+    quantity: fields.quantity,
+    technician: fields.technician,
+    workOrder: fields.workOrder,
   });
 }
 

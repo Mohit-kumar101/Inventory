@@ -1,6 +1,7 @@
 import { NavLink, Navigate, Route, Routes, useMatch } from 'react-router-dom';
 import { HistoryPage } from './pages/HistoryPage.jsx';
 import { RecordPage } from './pages/RecordPage.jsx';
+import { SetupNotice } from './components/SetupNotice.jsx';
 
 export function App() {
   const onHistory = useMatch('/history');
@@ -17,6 +18,7 @@ export function App() {
         </NavLink>
       </header>
       <main>
+        <SetupNotice />
         <Routes>
           <Route path="/" element={<RecordPage />} />
           <Route path="/history" element={<HistoryPage />} />

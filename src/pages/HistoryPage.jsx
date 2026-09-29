@@ -1,34 +1,40 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { downloadExcel, excelFilename } from '../excel.js';
 import { TextField } from '../components/Fields.jsx';
-import { deleteOnOrBefore, filterEntries, listEntries } from '../log.js';
-import { HISTORY_PASSWORD } from '../historyAccess.js';
+import { deleteBefore, exportTransactions, previewDelete } from '../api.js';
 
 const EMPTY_FILTERS = { dateFrom: '', dateTo: '', technician: '', partNumber: '', movement: '' };
 const PAGE_SIZE = 20;
 
 export function HistoryPage() {
-  const [open, setOpen] = useState(false);
+  const [session, setSession] = useState(null);
 
   useEffect(() => {
-    document.title = open ? 'Transaction history' : 'History';
-  }, [open]);
+    document.title = session ? 'Transaction history' : 'History';
+  }, [session]);
 
-  if (!open) return <HistoryLock onOpen={() => setOpen(true)} />;
-  return <HistoryBody />;
+  if (!session) return <HistoryLock onOpen={setSession} />;
+  return <HistoryBody adminToken={session.adminToken} initial={session.initial} />;
 }
 
 function HistoryLock({ onOpen }) {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [checking, setChecking] = useState(false);
 
-  function submit(event) {
+  async function submit(event) {
     event.preventDefault();
-    if (password === HISTORY_PASSWORD) {
-      onOpen();
-      return;
+    if (checking) return;
+    setChecking(true);
+    try {
+      const initial = await exportTransactions({ adminToken: password, ...EMPTY_FILTERS });
+      onOpen({ adminToken: password, initial });
+    } catch (err) {
+      const message = err.message || '';
+      setError(/not authorized/i.test(message) ? 'That password is not correct.' : message);
+    } finally {
+      setChecking(false);
     }
-    setError('That password is not correct.');
   }
 
   return (
@@ -50,19 +56,21 @@ function HistoryLock({ onOpen }) {
             setError('');
           }}
         />
-        <button type="submit" className="primary">
-          Open history
+        <button type="submit" className="primary" disabled={checking} aria-busy={checking}>
+          {checking ? 'Checking…' : 'Open history'}
         </button>
       </form>
     </section>
   );
 }
 
-function HistoryBody() {
+function HistoryBody({ adminToken, initial }) {
   const [draft, setDraft] = useState(EMPTY_FILTERS);
   const [applied, setApplied] = useState(EMPTY_FILTERS);
   const [page, setPage] = useState(1);
-  const [rows, setRows] = useState(() => listEntries());
+  const [rows, setRows] = useState(initial.rows || []);
+  const [windowed, setWindowed] = useState(Boolean(initial.windowed));
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [cutoff, setCutoff] = useState('');
@@ -72,7 +80,7 @@ function HistoryBody() {
     document.title = 'Transaction history';
   }, []);
 
-  const filtered = useMemo(() => filterEntries(rows, applied), [rows, applied]);
+  const filtered = rows;
   const total = filtered.length;
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
   const safePage = Math.min(page, pageCount);
@@ -80,20 +88,39 @@ function HistoryBody() {
   const from = total === 0 ? 0 : (safePage - 1) * PAGE_SIZE + 1;
   const to = Math.min(total, safePage * PAGE_SIZE);
 
+  const load = useCallback(
+    async (filters) => {
+      setLoading(true);
+      try {
+        const data = await exportTransactions({ adminToken, ...filters });
+        setRows(data.rows || []);
+        setWindowed(Boolean(data.windowed));
+        setError('');
+        return true;
+      } catch (err) {
+        setError(err.message || 'Could not load history.');
+        return false;
+      } finally {
+        setLoading(false);
+      }
+    },
+    [adminToken]
+  );
+
   function refresh() {
-    setRows(listEntries());
+    return load(applied);
   }
 
-  function applyFilters(event) {
+  async function applyFilters(event) {
     event.preventDefault();
     if (draft.dateFrom && draft.dateTo && draft.dateFrom > draft.dateTo) {
       setError('The start date must be on or before the end date.');
       return;
     }
-    setError('');
     setNotice('');
     setPage(1);
-    setApplied({ ...draft });
+    const next = { ...draft };
+    if (await load(next)) setApplied(next);
   }
 
   function downloadMatching() {
@@ -106,27 +133,35 @@ function HistoryBody() {
     setNotice(`Downloaded ${filtered.length} entries. Open the file in Excel.`);
   }
 
-  function reviewOldEntries() {
+  async function reviewOldEntries() {
     setPendingDelete(null);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(cutoff)) {
       setError('Choose the last date to remove.');
       return;
     }
-    const count = rows.filter((row) => row.date && row.date <= cutoff).length;
-    setError('');
-    setPendingDelete({ before: cutoff, count });
+    try {
+      const data = await previewDelete({ adminToken, before: cutoff });
+      setError('');
+      setPendingDelete({ before: data.before, count: data.count });
+    } catch (err) {
+      setError(err.message || 'Could not check old entries.');
+    }
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     if (!pendingDelete?.count) return;
     const agreed = window.confirm(
       `Remove ${pendingDelete.count} entries dated on or before ${pendingDelete.before}? Download Excel first if you still need them.`
     );
     if (!agreed) return;
-    const removed = deleteOnOrBefore(pendingDelete.before);
-    setPendingDelete(null);
-    refresh();
-    setNotice(`Removed ${removed} entries.`);
+    try {
+      const data = await deleteBefore({ adminToken, before: pendingDelete.before });
+      setPendingDelete(null);
+      await refresh();
+      setNotice(`Removed ${data.deleted} entries.`);
+    } catch (err) {
+      setError(err.message || 'Could not remove entries.');
+    }
   }
 
   return (
@@ -183,21 +218,24 @@ function HistoryBody() {
           onChange={(event) => setDraft((current) => ({ ...current, partNumber: event.target.value }))}
         />
         <div className="filter-actions">
-          <button type="submit" className="primary">
-            Apply days
+          <button type="submit" className="primary" disabled={loading} aria-busy={loading}>
+            {loading ? 'Loading…' : 'Apply days'}
           </button>
           <button
             type="button"
             className="secondary"
-            onClick={() => {
+            disabled={loading}
+            onClick={async () => {
               setDraft(EMPTY_FILTERS);
-              setApplied(EMPTY_FILTERS);
               setPage(1);
-              setError('');
               setNotice('');
+              if (await load(EMPTY_FILTERS)) setApplied(EMPTY_FILTERS);
             }}
           >
             Clear
+          </button>
+          <button type="button" className="secondary" disabled={loading} onClick={refresh}>
+            Refresh
           </button>
         </div>
       </form>
@@ -213,6 +251,12 @@ function HistoryBody() {
         </p>
       ) : null}
 
+      {windowed ? (
+        <p className="note" role="status">
+          Showing the latest 400 entries. Choose From or To dates to search older ones.
+        </p>
+      ) : null}
+
       <div className="import-bar">
         <p>
           {total === 0 ? 'No entries for these days.' : `Showing ${from}–${to} of ${total}`}
@@ -224,7 +268,7 @@ function HistoryBody() {
 
       <div className="cards">
         {visible.map((row) => (
-          <article className="card" key={row.localId}>
+          <article className="card" key={row.transactionId}>
             <div className="card-top">
               <span className={row.movement === 'OUT' ? 'pill out' : 'pill back'}>{row.movement}</span>
               <span className="txn-id">Transaction {row.transactionId}</span>

@@ -155,7 +155,7 @@ function appendTransaction(payload, props) {
     var sheet = requireSheet();
     var now = new Date();
     var zone = spreadsheet().getSpreadsheetTimeZone();
-    var transactionId = newTransactionId(now, zone);
+    var transactionId = String(highestTransactionNumber(sheet) + 1);
     var date = Utilities.formatDate(now, zone, 'yyyy-MM-dd');
     var time = Utilities.formatDate(now, zone, 'HH:mm:ss');
     var timestamp = Utilities.formatDate(now, zone, 'yyyy-MM-dd HH:mm:ss');
@@ -210,7 +210,7 @@ function importTransactions(payload, props) {
     var sheet = requireSheet();
     var receipts = ensureReceipts(spreadsheet());
     var known = receiptMap(receipts);
-    var zone = spreadsheet().getSpreadsheetTimeZone();
+    var nextNumber = highestTransactionNumber(sheet) + 1;
     var results = [];
     var imported = 0;
     var skipped = 0;
@@ -221,7 +221,7 @@ function importTransactions(payload, props) {
         results.push({ localId: item.localId, transactionId: known[item.localId], duplicate: true });
         continue;
       }
-      var transactionId = newTransactionId(new Date(), zone);
+      var transactionId = String(nextNumber++);
       sheet.appendRow([
         transactionId,
         item.date,
@@ -574,10 +574,16 @@ function tokensMatch(provided, expected) {
   return mismatch === 0;
 }
 
-function newTransactionId(now, zone) {
-  var stamp = Utilities.formatDate(now, zone, 'yyyyMMdd-HHmmss');
-  var rand = Utilities.getUuid().replace(/-/g, '').substring(0, 8);
-  return 'TXN-' + stamp + '-' + rand;
+function highestTransactionNumber(sheet) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return 0;
+  var values = sheet.getRange(2, 1, lastRow - 1, 1).getValues();
+  var highest = 0;
+  for (var i = 0; i < values.length; i++) {
+    var number = parseInt(String(values[i][0]), 10);
+    if (isFinite(number) && number > highest) highest = number;
+  }
+  return highest;
 }
 
 function sheetText(value) {

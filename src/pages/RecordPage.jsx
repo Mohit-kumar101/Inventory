@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { saveEntry } from '../log.js';
+import { appendTransaction } from '../api.js';
 import { TextAreaField, TextField } from '../components/Fields.jsx';
 import { StationLink } from '../components/StationLink.jsx';
 import { movementLabel, validateDetails } from '../validate.js';
@@ -24,6 +24,11 @@ function writeStorage(area, key, value) {
 const DRAFT_KEY = 'inventory.draft';
 const TECH_KEY = 'inventory.technician';
 const FIELD_ORDER = ['fgNumber', 'description', 'partNumber', 'company', 'quantity', 'technician'];
+
+function newIdempotencyKey() {
+  if (crypto.randomUUID) return crypto.randomUUID();
+  return `key-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+}
 
 function blankForm(technician = '', remember = false) {
   return {
@@ -115,6 +120,7 @@ export function RecordPage() {
     setForm((current) => ({
       ...current,
       step: 'review',
+      idempotencyKey: newIdempotencyKey(),
       noFg: !checked.value.fgNumber,
       fgNumber: checked.value.fgNumber,
       description: checked.value.description,
@@ -141,9 +147,10 @@ export function RecordPage() {
     setSubmitting(true);
     setSubmitError('');
     try {
-      const entry = saveEntry(payload);
+      const key = form.idempotencyKey || newIdempotencyKey();
+      const response = await appendTransaction(payload, key);
       writeStorage(sessionStorage, DRAFT_KEY, null);
-      setResult(entry);
+      setResult(response.transaction);
       setForm((current) => ({ ...current, step: 'success' }));
     } catch (error) {
       setSubmitError(error.message || 'Could not save this entry.');
